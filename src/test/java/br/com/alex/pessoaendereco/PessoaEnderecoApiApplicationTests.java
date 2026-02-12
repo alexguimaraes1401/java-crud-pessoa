@@ -1,4 +1,4 @@
-package br.com.alex.pessoa_endereco_api;
+package br.com.alex.pessoaendereco;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
