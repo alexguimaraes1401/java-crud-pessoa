@@ -30,7 +30,7 @@ class PessoaServiceTest {
     void setUp() {
         pessoaRepository = Mockito.mock(PessoaRepository.class);
         enderecoRepository = Mockito.mock(EnderecoRepository.class);
-        pessoaService = new PessoaService(pessoaRepository, enderecoRepository);
+        pessoaService = new br.com.alex.pessoaendereco.service.implementation.PessoaService(pessoaRepository, enderecoRepository);
     }
 
     @Test

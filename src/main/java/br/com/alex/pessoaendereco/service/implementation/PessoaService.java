@@ -1,4 +1,5 @@
-package br.com.alex.pessoaendereco.service;
+package br.com.alex.pessoaendereco.service.implementation;
+
 import br.com.alex.pessoaendereco.dto.request.EnderecoRequestDTO;
 import br.com.alex.pessoaendereco.dto.request.PessoaRequestDTO;
 import br.com.alex.pessoaendereco.dto.response.EnderecoResponseDTO;
@@ -11,12 +12,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class PessoaService implements IPessoaService {
+public class PessoaService implements br.com.alex.pessoaendereco.service.PessoaService {
 
     private final PessoaRepository pessoaRepository;
     

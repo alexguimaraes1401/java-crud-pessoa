@@ -1,10 +1,11 @@
 package br.com.alex.pessoaendereco.service;
+
 import br.com.alex.pessoaendereco.dto.request.PessoaRequestDTO;
 import br.com.alex.pessoaendereco.dto.response.PessoaResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface IPessoaService {
+public interface PessoaService {
 
     PessoaResponseDTO criar(PessoaRequestDTO dto);
 
