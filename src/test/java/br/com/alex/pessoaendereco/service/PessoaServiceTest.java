@@ -5,6 +5,9 @@ import br.com.alex.pessoaendereco.dto.request.PessoaRequestDTO;
 import br.com.alex.pessoaendereco.dto.response.PessoaResponseDTO;
 import br.com.alex.pessoaendereco.entity.Endereco;
 import br.com.alex.pessoaendereco.entity.Pessoa;
+import br.com.alex.pessoaendereco.exception.CpfJaCadastradoException;
+import br.com.alex.pessoaendereco.exception.EnderecoPrincipalInvalidoException;
+import br.com.alex.pessoaendereco.exception.PessoaNaoEncontradaException;
 import br.com.alex.pessoaendereco.repository.EnderecoRepository;
 import br.com.alex.pessoaendereco.repository.PessoaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,11 +77,8 @@ class PessoaServiceTest {
 
     @Test
     void listar_deveMapearPagina() {
-        Pessoa p = new Pessoa();
+        Pessoa p = new Pessoa("Joao", "09876543210", LocalDate.of(1985, 5, 5));
         p.setId(5L);
-        p.setNome("Joao");
-        p.setCpf("09876543210");
-        p.setDataNascimento(LocalDate.of(1985,5,5));
         p.setEnderecos(List.of());
 
         when(pessoaRepository.findAll(any(PageRequest.class)))
@@ -110,7 +110,7 @@ class PessoaServiceTest {
 
         when(pessoaRepository.existsByCpf(request.getCpf())).thenReturn(false);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> pessoaService.criar(request));
+        EnderecoPrincipalInvalidoException ex = assertThrows(EnderecoPrincipalInvalidoException.class, () -> pessoaService.criar(request));
         assertTrue(ex.getMessage().contains("principal"));
     }
 
@@ -133,18 +133,15 @@ class PessoaServiceTest {
 
         when(pessoaRepository.existsByCpf(request.getCpf())).thenReturn(true);
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> pessoaService.criar(request));
+        CpfJaCadastradoException ex = assertThrows(CpfJaCadastradoException.class, () -> pessoaService.criar(request));
         assertTrue(ex.getMessage().contains("CPF já cadastrado") || ex.getMessage().contains("CPF"));
     }
 
     @Test
     void atualizar_deveAtualizarCorretamente() {
         Long id = 10L;
-        Pessoa pessoaExistente = new Pessoa();
+        Pessoa pessoaExistente = new Pessoa("Velho", "99988877766", java.time.LocalDate.of(1990, 1, 1));
         pessoaExistente.setId(id);
-        pessoaExistente.setNome("Velho");
-        pessoaExistente.setCpf("99988877766");
-        pessoaExistente.setDataNascimento(java.time.LocalDate.of(1990,1,1));
         pessoaExistente.setEnderecos(new java.util.ArrayList<>());
 
         PessoaRequestDTO request = new PessoaRequestDTO();
@@ -183,7 +180,7 @@ class PessoaServiceTest {
 
         when(pessoaRepository.findById(id)).thenReturn(java.util.Optional.empty());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> pessoaService.atualizar(id, request));
+        PessoaNaoEncontradaException ex = assertThrows(PessoaNaoEncontradaException.class, () -> pessoaService.atualizar(id, request));
         assertTrue(ex.getMessage().contains("Pessoa não encontrada"));
     }
 }

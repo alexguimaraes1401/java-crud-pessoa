@@ -14,6 +14,15 @@ import java.util.List;
 )
 public class Pessoa {
 
+    protected Pessoa() {
+    }
+
+    public Pessoa(String nome, String cpf, LocalDate dataNascimento) {
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

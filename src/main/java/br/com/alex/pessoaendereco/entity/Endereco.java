@@ -6,6 +6,29 @@ import jakarta.persistence.*;
 @Table(name = "endereco")
 public class Endereco {
 
+    protected Endereco() {
+    }
+
+    public Endereco(
+            String rua,
+            String numero,
+            String bairro,
+            String cidade,
+            String estado,
+            String cep,
+            boolean principal,
+            Pessoa pessoa
+    ) {
+        this.rua = rua;
+        this.numero = numero;
+        this.bairro = bairro;
+        this.cidade = cidade;
+        this.estado = estado;
+        this.cep = cep;
+        this.principal = principal;
+        this.pessoa = pessoa;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,6 +57,7 @@ public class Endereco {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pessoa_id", nullable = false)
     private Pessoa pessoa;
+
     public Long getId() {
         return id;
     }

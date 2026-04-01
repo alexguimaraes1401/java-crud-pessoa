@@ -1,11 +1,14 @@
 package br.com.alex.pessoaendereco.service.implementation;
 
-import br.com.alex.pessoaendereco.dto.request.EnderecoRequestDTO;
 import br.com.alex.pessoaendereco.dto.request.PessoaRequestDTO;
-import br.com.alex.pessoaendereco.dto.response.EnderecoResponseDTO;
 import br.com.alex.pessoaendereco.dto.response.PessoaResponseDTO;
 import br.com.alex.pessoaendereco.entity.Endereco;
 import br.com.alex.pessoaendereco.entity.Pessoa;
+import br.com.alex.pessoaendereco.exception.CpfJaCadastradoException;
+import br.com.alex.pessoaendereco.exception.EnderecoPrincipalInvalidoException;
+import br.com.alex.pessoaendereco.exception.PessoaNaoEncontradaException;
+import br.com.alex.pessoaendereco.mapper.EnderecoMapper;
+import br.com.alex.pessoaendereco.mapper.PessoaMapper;
 import br.com.alex.pessoaendereco.repository.EnderecoRepository;
 import br.com.alex.pessoaendereco.repository.PessoaRepository;
 import org.springframework.data.domain.Page;
@@ -14,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -30,41 +32,37 @@ public class PessoaService implements br.com.alex.pessoaendereco.service.PessoaS
     public PessoaResponseDTO criar(PessoaRequestDTO dto) {
 
         if (pessoaRepository.existsByCpf(dto.getCpf())) {
-            throw new RuntimeException("CPF já cadastrado");
+            throw new CpfJaCadastradoException();
         }
 
-        Pessoa pessoa = new Pessoa();
-        pessoa.setNome(dto.getNome());
-        pessoa.setCpf(dto.getCpf());
-        pessoa.setDataNascimento(dto.getDataNascimento());
+        Pessoa pessoa = PessoaMapper.newEntity(dto);
 
-        List<Endereco> enderecos = mapEnderecos(dto.getEnderecos(), pessoa);
+        List<Endereco> enderecos = EnderecoMapper.toEntityList(dto.getEnderecos(), pessoa);
         validarEnderecoPrincipal(enderecos);
 
         pessoa.setEnderecos(enderecos);
 
         Pessoa salva = pessoaRepository.save(pessoa);
-        return mapPessoaResponse(salva);
+        return PessoaMapper.toResponseDTO(salva);
     }
 
     @Override
     public PessoaResponseDTO atualizar(Long id, PessoaRequestDTO dto) {
 
         Pessoa pessoa = pessoaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Pessoa não encontrada"));
+            .orElseThrow(PessoaNaoEncontradaException::new);
 
-        pessoa.setNome(dto.getNome());
-        pessoa.setDataNascimento(dto.getDataNascimento());
+        PessoaMapper.updateEntity(pessoa, dto);
 
         pessoa.getEnderecos().clear();
 
-        List<Endereco> novosEnderecos = mapEnderecos(dto.getEnderecos(), pessoa);
+        List<Endereco> novosEnderecos = EnderecoMapper.toEntityList(dto.getEnderecos(), pessoa);
         validarEnderecoPrincipal(novosEnderecos);
 
         pessoa.getEnderecos().addAll(novosEnderecos);
 
         Pessoa atualizada = pessoaRepository.save(pessoa);
-        return mapPessoaResponse(atualizada);
+        return PessoaMapper.toResponseDTO(atualizada);
     }
 
     @Override
@@ -72,9 +70,9 @@ public class PessoaService implements br.com.alex.pessoaendereco.service.PessoaS
     public PessoaResponseDTO buscarPorId(Long id) {
 
         Pessoa pessoa = pessoaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Pessoa não encontrada"));
+            .orElseThrow(PessoaNaoEncontradaException::new);
 
-        return mapPessoaResponse(pessoa);
+        return PessoaMapper.toResponseDTO(pessoa);
     }
 
     @Override
@@ -82,32 +80,17 @@ public class PessoaService implements br.com.alex.pessoaendereco.service.PessoaS
     public Page<PessoaResponseDTO> listar(Pageable pageable) {
 
         return pessoaRepository.findAll(pageable)
-            .map(this::mapPessoaResponse);
+            .map(PessoaMapper::toResponseDTO);
     }
 
     @Override
     public void deletar(Long id) {
 
         if (!pessoaRepository.existsById(id)) {
-            throw new RuntimeException("Pessoa não encontrada");
+            throw new PessoaNaoEncontradaException();
         }
 
         pessoaRepository.deleteById(id);
-    }
-
-    private List<Endereco> mapEnderecos(List<EnderecoRequestDTO> dtos, Pessoa pessoa) {
-        return dtos.stream().map(dto -> {
-            Endereco e = new Endereco();
-            e.setRua(dto.getRua());
-            e.setNumero(dto.getNumero());
-            e.setBairro(dto.getBairro());
-            e.setCidade(dto.getCidade());
-            e.setEstado(dto.getEstado());
-            e.setCep(dto.getCep());
-            e.setPrincipal(dto.isPrincipal());
-            e.setPessoa(pessoa);
-            return e;
-        }).collect(Collectors.toList());
     }
 
     private void validarEnderecoPrincipal(List<Endereco> enderecos) {
@@ -116,35 +99,7 @@ public class PessoaService implements br.com.alex.pessoaendereco.service.PessoaS
             .count();
 
         if (qtd != 1) {
-            throw new RuntimeException("Deve existir exatamente um endereço principal");
+            throw new EnderecoPrincipalInvalidoException();
         }
-    }
-
-    private PessoaResponseDTO mapPessoaResponse(Pessoa pessoa) {
-
-        PessoaResponseDTO dto = new PessoaResponseDTO();
-        dto.setId(pessoa.getId());
-        dto.setNome(pessoa.getNome());
-        dto.setCpf(pessoa.getCpf());
-        dto.setDataNascimento(pessoa.getDataNascimento());
-        dto.setIdade(pessoa.getIdade());
-
-        List<EnderecoResponseDTO> enderecos = pessoa.getEnderecos()
-            .stream()
-            .map(e -> {
-                EnderecoResponseDTO edto = new EnderecoResponseDTO();
-                edto.setId(e.getId());
-                edto.setRua(e.getRua());
-                edto.setNumero(e.getNumero());
-                edto.setBairro(e.getBairro());
-                edto.setCidade(e.getCidade());
-                edto.setEstado(e.getEstado());
-                edto.setCep(e.getCep());
-                edto.setPrincipal(e.isPrincipal());
-                return edto;
-            }).collect(Collectors.toList());
-
-        dto.setEnderecos(enderecos);
-        return dto;
     }
 }
