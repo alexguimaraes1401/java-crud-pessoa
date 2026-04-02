@@ -2,6 +2,7 @@ package br.com.alex.pessoaendereco.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.br.CPF;
 
@@ -14,6 +15,7 @@ public class PessoaRequestDTO {
     private String nome;
 
     @NotNull
+    @Past(message = "dataNascimento deve estar no passado")
     private LocalDate dataNascimento;
 
     @NotBlank

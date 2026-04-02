@@ -1,8 +1,10 @@
 package br.com.alex.pessoaendereco.entity;
 
+import br.com.alex.pessoaendereco.exception.EnderecoPrincipalInvalidoException;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -41,7 +43,7 @@ public class Pessoa {
         cascade = CascadeType.ALL,
         orphanRemoval = true
     )
-    private List<Endereco> enderecos;
+    private List<Endereco> enderecos = new ArrayList<>();
 
     @Transient
     public Integer getIdade() {
@@ -88,7 +90,17 @@ public class Pessoa {
     }
 
     public void setEnderecos(List<Endereco> enderecos) {
-        this.enderecos = enderecos;
+        this.enderecos = (enderecos == null) ? new ArrayList<>() : enderecos;
+    }
+
+    public void validarEnderecoPrincipal() {
+        long qtd = (enderecos == null ? 0 : enderecos.stream()
+            .filter(Endereco::isPrincipal)
+            .count());
+
+        if (qtd != 1) {
+            throw new EnderecoPrincipalInvalidoException();
+        }
     }
 
 }

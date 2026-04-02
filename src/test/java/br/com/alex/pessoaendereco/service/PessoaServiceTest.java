@@ -8,7 +8,6 @@ import br.com.alex.pessoaendereco.entity.Pessoa;
 import br.com.alex.pessoaendereco.exception.CpfJaCadastradoException;
 import br.com.alex.pessoaendereco.exception.EnderecoPrincipalInvalidoException;
 import br.com.alex.pessoaendereco.exception.PessoaNaoEncontradaException;
-import br.com.alex.pessoaendereco.repository.EnderecoRepository;
 import br.com.alex.pessoaendereco.repository.PessoaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,14 +25,12 @@ import static org.mockito.Mockito.*;
 class PessoaServiceTest {
 
     private PessoaRepository pessoaRepository;
-    private EnderecoRepository enderecoRepository;
     private PessoaService pessoaService;
 
     @BeforeEach
     void setUp() {
         pessoaRepository = Mockito.mock(PessoaRepository.class);
-        enderecoRepository = Mockito.mock(EnderecoRepository.class);
-        pessoaService = new br.com.alex.pessoaendereco.service.implementation.PessoaService(pessoaRepository, enderecoRepository);
+        pessoaService = new PessoaService(pessoaRepository);
     }
 
     @Test
@@ -167,6 +164,52 @@ class PessoaServiceTest {
         assertNotNull(resp);
         assertEquals("Novo", resp.getNome());
         assertEquals(1, resp.getEnderecos().size());
+        assertEquals("Rua Atualizada", resp.getEnderecos().get(0).getRua());
+    }
+
+    @Test
+    void atualizar_enderecoComId_deveAtualizarSemRecriar() {
+        Long id = 11L;
+        Pessoa pessoaExistente = new Pessoa("Nome", "11122233344", LocalDate.of(1990, 1, 1));
+        pessoaExistente.setId(id);
+
+        Endereco enderecoExistente = new Endereco(
+            "Rua A",
+            "10",
+            "Centro",
+            "Cidade",
+            "ST",
+            "12345678",
+            true,
+            pessoaExistente
+        );
+        enderecoExistente.setId(100L);
+        pessoaExistente.setEnderecos(new java.util.ArrayList<>(List.of(enderecoExistente)));
+
+        PessoaRequestDTO request = new PessoaRequestDTO();
+        request.setNome("Nome Atualizado");
+        request.setCpf("11122233344");
+        request.setDataNascimento(LocalDate.of(1991, 2, 2));
+
+        EnderecoRequestDTO e = new EnderecoRequestDTO();
+        e.setId(100L);
+        e.setRua("Rua Atualizada");
+        e.setNumero("55");
+        e.setBairro("Bairro");
+        e.setCidade("Cidade");
+        e.setEstado("ST");
+        e.setCep("87654321");
+        e.setPrincipal(true);
+        request.setEnderecos(List.of(e));
+
+        when(pessoaRepository.findById(id)).thenReturn(java.util.Optional.of(pessoaExistente));
+        when(pessoaRepository.save(any(Pessoa.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var resp = pessoaService.atualizar(id, request);
+
+        assertNotNull(resp);
+        assertEquals(1, resp.getEnderecos().size());
+        assertEquals(100L, resp.getEnderecos().get(0).getId());
         assertEquals("Rua Atualizada", resp.getEnderecos().get(0).getRua());
     }
 

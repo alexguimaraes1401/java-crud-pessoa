@@ -68,6 +68,9 @@ class PessoaApiIntegrationTest {
         Number idNumber = JsonPath.read(createResult.getResponse().getContentAsString(), "$.id");
         long id = idNumber.longValue();
 
+        Number enderecoIdNumber = JsonPath.read(createResult.getResponse().getContentAsString(), "$.enderecos[0].id");
+        long enderecoId = enderecoIdNumber.longValue();
+
         mockMvc.perform(get("/api/pessoas/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
@@ -87,6 +90,7 @@ class PessoaApiIntegrationTest {
                                                                         \"cpf\": \"%s\",
                                                                         \"enderecos\": [
                                                                                 {
+                                                                                        \"id\": %d,
                                                                                         \"rua\": \"Rua Atualizada\",
                                                                                         \"numero\": \"55\",
                                                                                         \"bairro\": \"Bairro\",
@@ -97,7 +101,7 @@ class PessoaApiIntegrationTest {
                                                                                 }
                                                                         ]
                                                                 }
-                                                                """).formatted(cpf);
+                                                                """).formatted(cpf, enderecoId);
 
         mockMvc.perform(
                 put("/api/pessoas/{id}", id)
@@ -109,6 +113,7 @@ class PessoaApiIntegrationTest {
         .andExpect(jsonPath("$.id").value(id))
         .andExpect(jsonPath("$.nome").value("Maria Atualizada"))
         .andExpect(jsonPath("$.cpf").value(cpf))
+        .andExpect(jsonPath("$.enderecos[0].id").value(enderecoId))
         .andExpect(jsonPath("$.enderecos[0].rua").value("Rua Atualizada"));
 
         mockMvc.perform(delete("/api/pessoas/{id}", id))
@@ -118,4 +123,11 @@ class PessoaApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
+
+        @Test
+        void buscarPorId_inexistente_deveRetornar404() throws Exception {
+                mockMvc.perform(get("/api/pessoas/{id}", 999999))
+                        .andExpect(status().isNotFound())
+                        .andExpect(jsonPath("$.detail").value("Pessoa não encontrada"));
+        }
 }

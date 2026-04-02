@@ -37,6 +37,17 @@ public final class EnderecoMapper {
         );
     }
 
+    public static void updateEntity(Endereco endereco, EnderecoRequestDTO dto, Pessoa pessoa) {
+        endereco.setRua(dto.getRua());
+        endereco.setNumero(dto.getNumero());
+        endereco.setBairro(dto.getBairro());
+        endereco.setCidade(dto.getCidade());
+        endereco.setEstado(dto.getEstado());
+        endereco.setCep(dto.getCep());
+        endereco.setPrincipal(dto.isPrincipal());
+        endereco.setPessoa(pessoa);
+    }
+
     public static EnderecoResponseDTO toResponseDTO(Endereco e) {
         EnderecoResponseDTO dto = new EnderecoResponseDTO();
         dto.setId(e.getId());
